@@ -1,5 +1,5 @@
 #! usr/bin/python
-# Script copyright Thomas Hodgson
+# Script copyright Thomas Hodgson 2021
 # MIT License
 
 """
@@ -19,7 +19,7 @@ biblatex file with missing entries added from the argument to --source. The new 
 of the optional argument --suffix added to the name of the original file.
 The default value of --suffix is '_extended'.
 
-Dependencies:
+Requires python 3. Dependencies:
 
 - argparse
 - os
@@ -53,7 +53,8 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-if args.source
+# if a --source option is provided, we need bibtexparser
+if args.source:
     import bibtexparser
     from bibtexparser.bwriter import BibTexWriter
     from bibtexparser.bibdatabase import BibDatabase
