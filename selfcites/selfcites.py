@@ -15,13 +15,17 @@ The following will be printed:
 - the entries in the file
 
 If the option --source argument is given, the script tries to use bibtexparser to make an extended
-biblatex file with missing entries added from the argument to --source. The new file will have value
-of the optional argument --suffix added to the name of the original file.
+biblatex file with missing entries added from the argument to --source.
+The new file will have the value of the optional argument --suffix added to the name of the original
+file.
 The default value of --suffix is '_extended'.
+If the optional --directory argument is given, the script will look for files in a directory with at
+that path with the extension specified by the optional --extension argument. The default is 'bib'.
 
 Requires python 3. Dependencies:
 
 - argparse
+- glob
 - os
 - re
 - bibtexparser
@@ -29,8 +33,10 @@ Requires python 3. Dependencies:
 """
 
 import argparse
+import glob
 import os
 import re
+
 # import bibtexparser: below, depending on whether a --source argument is specified
 
 # Handle command line arguments
@@ -40,7 +46,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "bibliographies",
     help="The bibliography files to check",
-    nargs="+",
+    nargs="*",
 )
 parser.add_argument(
     "--source",
@@ -50,6 +56,15 @@ parser.add_argument(
     "--suffix",
     help="Add this suffix to new bibliography files",
     default="_extended",
+)
+parser.add_argument(
+    "--directory",
+    help="Look in this directory for biblatex files",
+)
+parser.add_argument(
+    "--extension",
+    help="The extension for bibliography files",
+    default="bib",
 )
 args = parser.parse_args()
 
@@ -65,8 +80,32 @@ print(
     "(c) Thomas Hodgson 2021",
 )
 
+# Make a list of biblatex files to run on
+# Take the positional arguments, and add what is in the specified directory
+bibliographies = args.bibliographies + glob.glob(
+    os.path.join(args.directory, "*.{}".format(args.extension))
+)
 
-for current_file in args.bibliographies:
+# Tell the user which directory was looked at, and what extension was used
+if args.directory:
+    print(
+        "I was asked to look at the directory '{}' for files with the extension '.{}'.".format(
+            args.directory, args.extension
+        )
+    )
+    # Check whether the directory exists, and tell the user if not
+    if not os.path.isdir(args.directory):
+        print("There is no directory '{}'.".format(args.directory))
+
+# Tell the use which files are being looked for
+if bibliographies:
+    print(
+        "I am looking for these bibliographies:",
+        ", ".join(sorted(bibliographies)),
+        sep="\n",
+    )
+
+for current_file in bibliographies:
     # open and read the current argument
     try:
         with open(current_file, "r") as in_file:
