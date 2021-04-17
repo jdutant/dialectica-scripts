@@ -81,10 +81,13 @@ print(
 )
 
 # Make a list of biblatex files to run on
-# Take the positional arguments, and add what is in the specified directory
-bibliographies = args.bibliographies + glob.glob(
-    os.path.join(args.directory, "*.{}".format(args.extension))
-)
+# Take the positional arguments
+bibliographies = args.bibliographies
+# Add what is in the specified directory
+if args.directory:
+    bibliographies += glob.glob(
+        os.path.join(args.directory, "*.{}".format(args.extension))
+    )
 
 # Tell the user which directory was looked at, and what extension was used
 if args.directory:
