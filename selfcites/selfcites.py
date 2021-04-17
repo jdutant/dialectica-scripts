@@ -1,5 +1,5 @@
 #! usr/bin/python
-# Script copyright Thomas Hodgson
+# Script copyright Thomas Hodgson 2021
 # MIT License
 
 """
@@ -19,7 +19,7 @@ biblatex file with missing entries added from the argument to --source. The new 
 of the optional argument --suffix added to the name of the original file.
 The default value of --suffix is '_extended'.
 
-Dependencies:
+Requires python 3. Dependencies:
 
 - argparse
 - os
@@ -31,10 +31,7 @@ Dependencies:
 import argparse
 import os
 import re
-import bibtexparser
-
-from bibtexparser.bwriter import BibTexWriter
-from bibtexparser.bibdatabase import BibDatabase
+# import bibtexparser: below, depending on whether a --source argument is specified
 
 # Handle command line arguments
 parser = argparse.ArgumentParser(
@@ -55,6 +52,18 @@ parser.add_argument(
     default="_extended",
 )
 args = parser.parse_args()
+
+# if a --source option is provided, we need bibtexparser
+if args.source:
+    import bibtexparser
+    from bibtexparser.bwriter import BibTexWriter
+    from bibtexparser.bibdatabase import BibDatabase
+
+# Print script information message
+print(
+    "Dialectica open access initiative self-citing bibliography file check\n",
+    "(c) Thomas Hodgson 2021",
+)
 
 
 for current_file in args.bibliographies:
@@ -78,10 +87,6 @@ for current_file in args.bibliographies:
         missing = self_keys - entries
 
         # Print the information
-        print(
-            "Dialectica open access initiative self-citing bibliography file check,",
-            "(c) Thomas Hodgson 2021",
-        )
         print("I'm checking: '{}'.".format(current_file))
 
         if self_keys:
@@ -101,7 +106,7 @@ for current_file in args.bibliographies:
                 print("There are no missing self-citing keys.")
 
         else:
-            print("I didn't find any keys self-citing other entries.")
+            print("I didn't find any self-citing keys.")
 
         if entries:
             print(
@@ -110,7 +115,7 @@ for current_file in args.bibliographies:
                 sep="\n",
             )
         else:
-            print("I didn't find any entries")
+            print("I didn't find any entries.")
 
         # Try to get the missing entries from the source bibliography
         if args.source and missing:
