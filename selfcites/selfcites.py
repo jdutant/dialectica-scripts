@@ -8,7 +8,7 @@ MIT License
 
 The script takes paths as arguments. The assumption is that these are biblatex files.
 It looks for biblatex cite commands, and compares these to the biblatex entries in the files.
-The following will be printed:
+The following will be printed, unless the --quiet option is set:
 
 - the keys used in citation commands (if any)
 - the missing keys that are not entries (if any)
@@ -43,6 +43,19 @@ import re
 parser = argparse.ArgumentParser(
     description="Check bibliography files for self-citing keys"
 )
+group = parser.add_mutually_exclusive_group()
+group.add_argument(
+    "--verbose",
+    action="store_true",
+    help="Print information about what the script does",
+    default=True,
+)
+group.add_argument(
+    "--quiet",
+    action="store_true",
+    help="Do not print information about what the script does",
+    default=False,
+)
 parser.add_argument(
     "bibliographies",
     help="The bibliography files to check",
@@ -74,11 +87,17 @@ if args.source:
     from bibtexparser.bwriter import BibTexWriter
     from bibtexparser.bibdatabase import BibDatabase
 
+# If --quiet is set, args.verbose is false
+if args.quiet:
+    args.verbose = False
+
 # Print script information message
-print(
-    "Dialectica open access initiative self-citing bibliography file check\n",
-    "(c) Thomas Hodgson 2021",
-)
+if args.verbose:
+    print(
+        "Dialectica open access initiative self-citing bibliography file check",
+        "(c) Thomas Hodgson 2021",
+        sep="\n",
+    )
 
 # Make a list of biblatex files to run on
 # Take the positional arguments
@@ -90,23 +109,25 @@ if args.directory:
     )
 
 # Tell the user which directory was looked at, and what extension was used
-if args.directory:
-    print(
-        "I was asked to look at the directory '{}' for files with the extension '.{}'.".format(
-            args.directory, args.extension
+if args.verbose:
+    if args.directory:
+        print(
+            "I was asked to look at the directory '{}' for files with the extension '.{}'.".format(
+                args.directory, args.extension
+            )
         )
-    )
-    # Check whether the directory exists, and tell the user if not
-    if not os.path.isdir(args.directory):
-        print("There is no directory '{}'.".format(args.directory))
+        # Check whether the directory exists, and tell the user if not
+        if not os.path.isdir(args.directory):
+            print("There is no directory '{}'.".format(args.directory))
 
-# Tell the use which files are being looked for
-if bibliographies:
-    print(
-        "I am looking for these bibliographies:",
-        ", ".join(sorted(bibliographies)),
-        sep="\n",
-    )
+    # Tell the user which files are being looked for
+
+    if bibliographies:
+        print(
+            "I am looking for these bibliographies:",
+            ", ".join(sorted(bibliographies)),
+            sep="\n",
+        )
 
 for current_file in bibliographies:
     # open and read the current argument
@@ -128,36 +149,37 @@ for current_file in bibliographies:
         # The members of self_keys that are not in entries
         missing = self_keys - entries
 
-        # Print the information
-        print("I'm checking: '{}'.".format(current_file))
+        if args.verbose:
+            # Print the information
+            print("I'm checking: '{}'.".format(current_file))
 
-        if self_keys:
-            print(
-                "I found these self-citing keys:",
-                ", ".join(sorted(self_keys)),
-                sep="\n",
-            )
-
-            if missing:
+            if self_keys:
                 print(
-                    "These self-citing keys are missing from the file's entries:",
-                    ", ".join(sorted(missing)),
+                    "I found these self-citing keys:",
+                    ", ".join(sorted(self_keys)),
+                    sep="\n",
+                )
+
+                if missing:
+                    print(
+                        "These self-citing keys are missing from the file's entries:",
+                        ", ".join(sorted(missing)),
+                        sep="\n",
+                    )
+                else:
+                    print("There are no missing self-citing keys.")
+
+            else:
+                print("I didn't find any self-citing keys.")
+
+            if entries:
+                print(
+                    "For information, these are all the entries I found:",
+                    ", ".join(sorted(entries)),
                     sep="\n",
                 )
             else:
-                print("There are no missing self-citing keys.")
-
-        else:
-            print("I didn't find any self-citing keys.")
-
-        if entries:
-            print(
-                "For information, these are all the entries I found:",
-                ", ".join(sorted(entries)),
-                sep="\n",
-            )
-        else:
-            print("I didn't find any entries.")
+                print("I didn't find any entries.")
 
         # Try to get the missing entries from the source bibliography
         if args.source and missing:
@@ -184,11 +206,14 @@ for current_file in bibliographies:
             new_file = os.path.join(head, root + args.suffix + ext)
             with open(new_file, "w") as out_file:
                 out_file.write(writer.write(extended_database))
-            print(
-                "I looked at the source bibliography: '{}'.".format(args.source),
-                "I wrote an extended bibliography file: '{}'.".format(new_file),
-                sep="\n",
-            )
+            if args.verbose:
+                # Print a message about what was written
+                print(
+                    "I looked at the source bibliography: '{}'.".format(args.source),
+                    "I wrote an extended bibliography file: '{}'.".format(new_file),
+                    sep="\n",
+                )
 
     except FileNotFoundError:
-        print("I couldn't find {}.".format(current_file))
+        if args.verbose:
+            print("I couldn't find {}.".format(current_file))
