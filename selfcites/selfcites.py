@@ -79,6 +79,11 @@ parser.add_argument(
     help="The extension for bibliography files",
     default="bib",
 )
+parser.add_argument(
+    "--recursive",
+    help="Look recursively in subdirectories of the directory specified by --directory",
+    action="store_true",
+)
 args = parser.parse_args()
 
 # if a --source option is provided, we need bibtexparser
@@ -104,9 +109,15 @@ if args.verbose:
 bibliographies = args.bibliographies
 # Add what is in the specified directory
 if args.directory:
-    bibliographies += glob.glob(
-        os.path.join(args.directory, "*.{}".format(args.extension))
-    )
+    if args.recursive:
+        bibliographies += glob.glob(
+            os.path.join(args.directory, "**", "*.{}".format(args.extension)),
+            recursive=True,
+        )
+    else:
+        bibliographies += glob.glob(
+            os.path.join(args.directory, "*.{}".format(args.extension)),
+        )
 
 # Tell the user which directory was looked at, and what extension was used
 if args.verbose:
@@ -116,6 +127,8 @@ if args.verbose:
                 args.directory, args.extension
             )
         )
+        if args.recursive:
+            print("I was asked to look in subdirectories too.")
         # Check whether the directory exists, and tell the user if not
         if not os.path.isdir(args.directory):
             print("There is no directory '{}'.".format(args.directory))
