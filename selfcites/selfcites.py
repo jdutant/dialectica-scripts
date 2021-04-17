@@ -45,16 +45,18 @@ parser = argparse.ArgumentParser(
 )
 group = parser.add_mutually_exclusive_group()
 group.add_argument(
-    "--verbose",
-    action="store_true",
-    help="Print information about what the script does",
-    default=True,
+    "--verbose", "-v",
+    help="Print information about what the script does. Double for full verbosity.",
+    action="count",
+    default=1,
+    dest="verbose"
 )
 group.add_argument(
-    "--quiet",
-    action="store_true",
+    "--quiet", "-q",
     help="Do not print information about what the script does",
-    default=False,
+    action="store_const",
+    const=0,
+    dest="verbose"
 )
 parser.add_argument(
     "bibliographies",
@@ -62,25 +64,25 @@ parser.add_argument(
     nargs="*",
 )
 parser.add_argument(
-    "--source",
+    "--source", "-s",
     help="A bibliography file to get missing entries from",
 )
 parser.add_argument(
-    "--suffix",
+    "--suffix", "-x",
     help="Add this suffix to new bibliography files",
     default="_extended",
 )
 parser.add_argument(
-    "--directory",
+    "--directory", "-d",
     help="Look in this directory for biblatex files",
 )
 parser.add_argument(
-    "--extension",
+    "--extension", "-e",
     help="The extension for bibliography files",
     default="bib",
 )
 parser.add_argument(
-    "--recursive",
+    "--recursive", "-r",
     help="Look recursively in subdirectories of the directory specified by --directory",
     action="store_true",
 )
@@ -92,12 +94,8 @@ if args.source:
     from bibtexparser.bwriter import BibTexWriter
     from bibtexparser.bibdatabase import BibDatabase
 
-# If --quiet is set, args.verbose is false
-if args.quiet:
-    args.verbose = False
-
 # Print script information message
-if args.verbose:
+if args.verbose >= 1:
     print(
         "Dialectica open access initiative self-citing bibliography file check",
         "(c) Thomas Hodgson 2021",
@@ -120,7 +118,7 @@ if args.directory:
         )
 
 # Tell the user which directory was looked at, and what extension was used
-if args.verbose:
+if args.verbose >= 1:
     if args.directory:
         print(
             "I was asked to look at the directory '{}' for files with the extension '.{}'.".format(
@@ -162,7 +160,7 @@ for current_file in bibliographies:
         # The members of self_keys that are not in entries
         missing = self_keys - entries
 
-        if args.verbose:
+        if args.verbose >= 1:
             # Print the information
             print("I'm checking: '{}'.".format(current_file))
 
@@ -185,14 +183,15 @@ for current_file in bibliographies:
             else:
                 print("I didn't find any self-citing keys.")
 
-            if entries:
-                print(
-                    "For information, these are all the entries I found:",
-                    ", ".join(sorted(entries)),
-                    sep="\n",
-                )
-            else:
-                print("I didn't find any entries.")
+            if args.verbose >= 2:
+                if entries:
+                    print(
+                        "For information, these are all the entries I found:",
+                        ", ".join(sorted(entries)),
+                        sep="\n",
+                    )
+                else:
+                    print("I didn't find any entries.")
 
         # Try to get the missing entries from the source bibliography
         if args.source and missing:
@@ -219,14 +218,14 @@ for current_file in bibliographies:
             new_file = os.path.join(head, root + args.suffix + ext)
             with open(new_file, "w") as out_file:
                 out_file.write(writer.write(extended_database))
-            if args.verbose:
+            if args.verbose >= 1:
                 # Print a message about what was written
                 print(
-                    "I looked at the source bibliography: '{}'.".format(args.source),
+                    "I looked for any missing entries in the source bibliography: '{}'.".format(args.source),
                     "I wrote an extended bibliography file: '{}'.".format(new_file),
                     sep="\n",
                 )
 
     except FileNotFoundError:
-        if args.verbose:
+        if args.verbose >=1:
             print("I couldn't find {}.".format(current_file))
