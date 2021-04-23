@@ -6,8 +6,8 @@
 Dialectica open access initiative self-citing bibliography file check, (c) Thomas Hodgson 2021
 MIT License
 
-The script takes paths as arguments. The assumption is that these are biblatex files.
-It looks for biblatex cite commands, and compares these to the biblatex entries in the files.
+The script takes paths as arguments. The assumption is that these are bibtex files.
+It looks for bibtex cite commands, and compares these to the bibtex entries in the files.
 The following will be printed, unless the --quiet option is set:
 
 - the keys used in citation commands (if any)
@@ -15,7 +15,7 @@ The following will be printed, unless the --quiet option is set:
 - the entries in the file
 
 If the option --source argument is given, the script tries to use bibtexparser to make an extended
-biblatex file with missing entries added from the argument to --source.
+bibtex file with missing entries added from the argument to --source.
 The new file will have the value of the optional argument --suffix added to the name of the original
 file.
 The default value of --suffix is '_extended'.
@@ -45,18 +45,20 @@ parser = argparse.ArgumentParser(
 )
 group = parser.add_mutually_exclusive_group()
 group.add_argument(
-    "--verbose", "-v",
+    "--verbose",
+    "-v",
     help="Print information about what the script does. Double for full verbosity.",
     action="count",
     default=1,
-    dest="verbose"
+    dest="verbose",
 )
 group.add_argument(
-    "--quiet", "-q",
+    "--quiet",
+    "-q",
     help="Do not print information about what the script does",
     action="store_const",
     const=0,
-    dest="verbose"
+    dest="verbose",
 )
 parser.add_argument(
     "bibliographies",
@@ -64,25 +66,30 @@ parser.add_argument(
     nargs="*",
 )
 parser.add_argument(
-    "--source", "-s",
+    "--source",
+    "-s",
     help="A bibliography file to get missing entries from",
 )
 parser.add_argument(
-    "--suffix", "-x",
+    "--suffix",
+    "-x",
     help="Add this suffix to new bibliography files",
     default="_extended",
 )
 parser.add_argument(
-    "--directory", "-d",
-    help="Look in this directory for biblatex files",
+    "--directory",
+    "-d",
+    help="Look in this directory for bibtex files",
 )
 parser.add_argument(
-    "--extension", "-e",
+    "--extension",
+    "-e",
     help="The extension for bibliography files",
     default="bib",
 )
 parser.add_argument(
-    "--recursive", "-r",
+    "--recursive",
+    "-r",
     help="Look recursively in subdirectories of the directory specified by --directory",
     action="store_true",
 )
@@ -92,7 +99,10 @@ args = parser.parse_args()
 if args.source:
     import bibtexparser
     from bibtexparser.bwriter import BibTexWriter
-    from bibtexparser.bibdatabase import BibDatabase
+
+    # Use bibtexparser to get a database from the file
+    with open(args.source, "r") as in_file:
+        source_database = bibtexparser.load(in_file)
 
 # Print script information message
 if args.verbose >= 1:
@@ -102,7 +112,7 @@ if args.verbose >= 1:
         sep="\n",
     )
 
-# Make a list of biblatex files to run on
+# Make a list of bibtex files to run on
 # Take the positional arguments
 bibliographies = args.bibliographies
 # Add what is in the specified directory
@@ -195,20 +205,15 @@ for current_file in bibliographies:
 
         # Try to get the missing entries from the source bibliography
         if args.source and missing:
-            # Use bibtexparser to get a dictionary from the file
-            with open(args.source, "r") as in_file:
-                source_database = bibtexparser.load(in_file)
-            # Use bibtexparser to get a dictionary from the file
+            # Use bibtexparser to get a database from the file
             with open(current_file, "r") as in_file:
                 current_database = bibtexparser.load(in_file)
             # A list of the missing entries, represented as dictionaries
             missing_entries = [
                 entry for entry in source_database.entries if entry["ID"] in missing
             ]
-            # Create a new database, and add the entries from the current database
-            # as well as the missing entries
-            extended_database = BibDatabase()
-            extended_database.entries = current_database.entries + missing_entries
+            # Add the missing entries to the current database
+            current_database.entries += missing_entries
 
             # Write to a file
             writer = BibTexWriter()
@@ -217,15 +222,17 @@ for current_file in bibliographies:
             root, ext = os.path.splitext(tail)
             new_file = os.path.join(head, root + args.suffix + ext)
             with open(new_file, "w") as out_file:
-                out_file.write(writer.write(extended_database))
+                out_file.write(writer.write(current_database))
             if args.verbose >= 1:
                 # Print a message about what was written
                 print(
-                    "I looked for any missing entries in the source bibliography: '{}'.".format(args.source),
+                    "I looked for any missing entries in the source bibliography: '{}'.".format(
+                        args.source
+                    ),
                     "I wrote an extended bibliography file: '{}'.".format(new_file),
                     sep="\n",
                 )
 
     except FileNotFoundError:
-        if args.verbose >=1:
+        if args.verbose >= 1:
             print("I couldn't find {}.".format(current_file))
