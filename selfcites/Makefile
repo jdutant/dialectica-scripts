@@ -1,4 +1,4 @@
-PHONY: test
+.PHONY: test
 
 test: sample_completed.bib
 
