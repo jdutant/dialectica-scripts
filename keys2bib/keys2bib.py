@@ -1,3 +1,4 @@
+#! usr/bin/python
 # Script copyright Thomas Hodgson 2021
 # MIT License
 
@@ -23,6 +24,7 @@ Depends on:
 import argparse
 import sys
 import bibtexparser
+from bibtexparser.bparser import BibTexParser
 from bibtexparser.bwriter import BibTexWriter
 
 parser = argparse.ArgumentParser(
@@ -56,7 +58,8 @@ if not args.source:
 
 # Parse the source bibliography file using bibtexparser
 with open(args.source, "r") as in_file:
-    bib_database = bibtexparser.load(in_file)
+    custom_parser = BibTexParser(ignore_nonstandard_types=False)
+    bib_database = bibtexparser.load(in_file, custom_parser)
 
 # Use a set to avoid duplicates
 keys = set(args.entries)
