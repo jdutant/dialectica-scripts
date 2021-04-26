@@ -98,11 +98,14 @@ args = parser.parse_args()
 # if a --source option is provided, we need bibtexparser
 if args.source:
     import bibtexparser
+    from bibtexparser.bparser import BibTexParser
     from bibtexparser.bwriter import BibTexWriter
+
+    source_parser = BibTexParser(ignore_nonstandard_types=False)
 
     # Use bibtexparser to get a database from the file
     with open(args.source, "r") as in_file:
-        source_database = bibtexparser.load(in_file)
+        source_database = bibtexparser.load(in_file, source_parser)
 
 # Print script information message
 if args.verbose >= 1:
@@ -207,7 +210,8 @@ for current_file in bibliographies:
         if args.source and missing:
             # Use bibtexparser to get a database from the file
             with open(current_file, "r") as in_file:
-                current_database = bibtexparser.load(in_file)
+                current_parser = BibTexParser(ignore_nonstandard_types=False)
+                current_database = bibtexparser.load(in_file, current_parser)
             # A list of the missing entries, represented as dictionaries
             missing_entries = [
                 entry for entry in source_database.entries if entry["ID"] in missing
