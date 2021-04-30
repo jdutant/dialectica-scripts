@@ -35,7 +35,7 @@ the present working one, you should specify their paths, e.g.:
 python3 ../resources/scripts/selfcites.py myarticle/mybibliography.bib
 ```
 
-### Cecking several BibTeX files
+### Checking several BibTeX files
 
 You can specify several files, or all BibTeX files at a given location:
 
